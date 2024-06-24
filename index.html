@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Prediction</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            padding-top: 50px;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 600px;
+            background: #ADD8E6;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin: auto; /* Center align the container */
+        }
+        .result {
+            margin-top: 20px;
+        }
+        .error {
+            color: red;
+        }
+        .btn-small {
+            padding: 5px 15px;
+            font-size: 12px;
+        }
+        /* Align form and buttons to center */
+        .form-inline {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        /* Adjust margin for the Refresh button */
+        .btn-group .btn {
+            margin-left: 5px;
+        }
+        .graph-container {
+            margin-top: 20px;
+        }
+        .graph {
+            width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center">Predict Student Admissions</h1><br>
+        <form id="predictionForm" class="form-inline">
+            <div class="form-group">
+                <label for="semester">Enter Semester (e.g., Spring 2024): </label>
+                <input type="text" class="form-control" id="semester" name="semester" required>
+            </div>
+            <div class="btn-group mt-3">
+                <button type="submit" class="btn btn-primary btn-small">Predict</button>
+                <button type="button" class="btn btn-warning btn-small" id="refreshButton">Refresh</button>
+            </div>
+        </form>
+        <div id="results" class="result"></div>
+        <div class="graph-container">
+            <img id="totalStudentsGraph" class="graph" src="static/total_students_regression.png" alt="Total Students Regression">
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- Custom JS -->
+    <script>
+        document.getElementById('predictionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const semester = document.getElementById('semester').value;
+
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: new URLSearchParams({ 'semester': semester })
+            })
+            .then(response => response.json())
+            .then(data => {
+                let resultDiv = document.getElementById('results');
+                if (data.error) {
+                    resultDiv.innerHTML = `<p class="error">${data.error}</p>`;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="alert alert-success">
+                            <p><strong>Total Students:</strong> ${data.total_students}</p>
+                            <p><strong>Male Students:</strong> ${data.male_students}</p>
+                            <p><strong>Female Students:</strong> ${data.female_students}</p>
+                        </div>
+                    `;
+
+                    // Update graph
+                    document.getElementById('totalStudentsGraph').src = '/static/total_students_regression.png?' + new Date().getTime();
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        document.getElementById('refreshButton').addEventListener('click', function() {
+            document.getElementById('semester').value = '';
+            document.getElementById('results').innerHTML = '';
+        });
+    </script>
+</body>
+</html>
